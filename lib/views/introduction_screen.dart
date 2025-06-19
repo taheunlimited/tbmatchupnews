@@ -22,7 +22,7 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
     },
     {
       'imageUrl':'assets/images/logo Ai no bg-01.png',
-      'heading':'ようこそ！',
+      'heading':'Welcome！',
       'body':'Coming Soon',
     },
     {
