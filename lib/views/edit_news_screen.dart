@@ -1,26 +1,53 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:matchupnews/views/utils/helper.dart';
 
-class AddNewsScreen extends StatefulWidget {
-  const AddNewsScreen({super.key});
+class EditNewsScreen extends StatefulWidget {
+  final String articleId;
+  final String title;
+  final String imageUrl;
+  final String publishedAt;
+  final String readTime;
+  final String category;
+  final String content;
+
+  const EditNewsScreen({
+    super.key,
+    required this.articleId,
+    required this.title,
+    required this.imageUrl,
+    required this.publishedAt,
+    required this.readTime,
+    required this.category,
+    required this.content,
+  });
 
   @override
-  State<AddNewsScreen> createState() => _AddNewsScreenState();
+  State<EditNewsScreen> createState() => _EditNewsScreenState();
 }
 
-class _AddNewsScreenState extends State<AddNewsScreen> {
+class _EditNewsScreenState extends State<EditNewsScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController titleController = TextEditingController();
-  final TextEditingController contentController = TextEditingController();
-  final TextEditingController imageUrlController = TextEditingController();
-  final TextEditingController readTimeController = TextEditingController();
-
+  late TextEditingController titleController;
+  late TextEditingController contentController;
+  late TextEditingController imageUrlController;
+  late TextEditingController readTimeController;
   String? selectedCategory;
+
   final List<String> categories = ['Politics', 'Technology', 'Health', 'Sports'];
+
+  @override
+  void initState() {
+    super.initState();
+    titleController = TextEditingController(text: widget.title);
+    contentController = TextEditingController(text: widget.content);
+    imageUrlController = TextEditingController(text: widget.imageUrl);
+    readTimeController = TextEditingController(text: widget.readTime);
+    selectedCategory = widget.category;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +57,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
         backgroundColor: cBgDc,
         elevation: 0,
         leading: BackButton(color: cPrimary),
-        title: Text(
-          'Create New News',
-          style: headline4.copyWith(color: cWhite, fontWeight: bold),
-        ),
+        title: Text('Edit News', style: headline4.copyWith(color: cWhite, fontWeight: bold)),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -44,43 +68,33 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(height: 24),
-                Text(
-                  'News Details',
-                  style: subtitle2.copyWith(color: cWhite, fontWeight: bold),
-                ),
+                Text('Edit News Details', style: subtitle2.copyWith(color: cWhite, fontWeight: bold)),
                 SizedBox(height: 12),
 
-                // Title Field
                 TextFormField(
                   controller: titleController,
                   decoration: _inputDecoration('Title'),
                   style: TextStyle(color: cWhite),
-                  validator: (value) =>
-                      value == null || value.length < 5 ? 'Title must be at least 5 characters' : null,
+                  validator: (value) => value == null || value.length < 5 ? 'Title must be at least 5 characters' : null,
                 ),
                 SizedBox(height: 12),
 
-                // Image URL
                 TextFormField(
                   controller: imageUrlController,
                   decoration: _inputDecoration('Image URL'),
                   style: TextStyle(color: cWhite),
-                  validator: (value) =>
-                      value == null || !value.startsWith('http') ? 'Enter valid image URL' : null,
+                  validator: (value) => value == null || !value.startsWith('http') ? 'Enter valid image URL' : null,
                 ),
                 SizedBox(height: 12),
 
-                // Read Time
                 TextFormField(
                   controller: readTimeController,
                   decoration: _inputDecoration('Read Time (e.g. 5 min)'),
                   style: TextStyle(color: cWhite),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Enter read time' : null,
+                  validator: (value) => value == null || value.isEmpty ? 'Enter read time' : null,
                 ),
                 SizedBox(height: 12),
 
-                // Category Dropdown
                 DropdownButtonFormField<String>(
                   value: selectedCategory,
                   items: categories
@@ -89,11 +103,7 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
                             child: Text(cat, style: TextStyle(color: cWhite)),
                           ))
                       .toList(),
-                  onChanged: (val) {
-                    setState(() {
-                      selectedCategory = val;
-                    });
-                  },
+                  onChanged: (val) => setState(() => selectedCategory = val),
                   dropdownColor: cBoxDc,
                   iconEnabledColor: cWhite,
                   decoration: _inputDecoration('Category'),
@@ -102,34 +112,23 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
                 ),
                 SizedBox(height: 12),
 
-                // Content Field
                 TextFormField(
                   controller: contentController,
                   decoration: _inputDecoration('Content'),
                   style: TextStyle(color: cWhite),
                   maxLines: 6,
-                  validator: (value) =>
-                      value == null || value.length < 100
-                          ? 'Content must be at least 100 characters'
-                          : null,
+                  validator: (value) => value == null || value.length < 100 ? 'Content must be at least 100 characters' : null,
                 ),
-
                 SizedBox(height: 24),
 
-                // Publish Button
                 ElevatedButton(
-                  onPressed: _publishNews,
+                  onPressed: _updateNews,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: cPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     minimumSize: const Size(double.infinity, 50),
                   ),
-                  child: Text(
-                    'Publish Now',
-                    style: subtitle1.copyWith(color: cWhite, fontWeight: bold),
-                  ),
+                  child: Text('Update News', style: subtitle1.copyWith(color: cWhite, fontWeight: bold)),
                 ),
                 SizedBox(height: 24),
               ],
@@ -140,48 +139,53 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
     );
   }
 
-  Future<void> _publishNews() async {
+  Future<void> _updateNews() async {
     if (_formKey.currentState!.validate()) {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
 
       if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("You must login to add news")),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("You must login to update news")));
         return;
       }
 
-      final url = Uri.parse('https://rest-api-berita.vercel.app/api/v1/news');
-      final response = await http.post(
+      final url = Uri.parse('https://rest-api-berita.vercel.app/api/v1/news/${widget.articleId}');
+      final body = jsonEncode({
+        'title': titleController.text,
+        'category': selectedCategory,
+        'readTime': readTimeController.text,
+        'imageUrl': imageUrlController.text,
+        'content': contentController.text,
+        'tags': ['flutter', 'news'],
+        'isTrending': true,
+      });
+
+      final response = await http.put(
         url,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({
-          'title': titleController.text,
-          'category': selectedCategory,
-          'readTime': readTimeController.text,
-          'imageUrl': imageUrlController.text,
-          'content': contentController.text,
-          'tags': ['flutter', 'news'],
-        }),
+        body: body,
       );
 
       final responseData = jsonDecode(response.body);
-      if (response.statusCode == 201 && responseData['success'] == true) {
+      if (response.statusCode == 200 && responseData['success'] == true) {
         if (!mounted) return;
-        Navigator.pop(context, true); // Trigger refresh di HomeScreen
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("News added successfully!")),
-        );
+        Navigator.pop(context, {
+          'updated': true,
+          'updatedArticle': {
+            'title': titleController.text,
+            'content': contentController.text,
+            'imageUrl': imageUrlController.text,
+            'category': selectedCategory,
+            'readTime': readTimeController.text,
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("News updated successfully!")));
       } else {
-        print("Upload failed: ${response.body}");
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to add news: ${responseData['message']}")),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed: ${responseData['message'] ?? 'Unknown error'}")));
       }
     }
   }
@@ -191,17 +195,9 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
       hintText: hint,
       hintStyle: TextStyle(color: cWhite),
       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: cPrimary),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: cPrimary),
-        borderRadius: BorderRadius.circular(8),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: cPrimary), borderRadius: BorderRadius.circular(8)),
+      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: cPrimary), borderRadius: BorderRadius.circular(8)),
     );
   }
 

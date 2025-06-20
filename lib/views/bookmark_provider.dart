@@ -6,6 +6,14 @@ class BookmarkProvider with ChangeNotifier {
 
   List<News> get bookmarkedNews => _bookmarkedNews;
 
+  String? _token;
+
+  void setToken(String? token) {
+    _token = token;
+  }
+
+  bool get isGuest => _token == null;
+
   void addBookmark(News news) {
     if (!_bookmarkedNews.any((item) => item.title == news.title)) {
       _bookmarkedNews.add(news);

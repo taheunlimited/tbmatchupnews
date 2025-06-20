@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:matchupnews/views/bookmark_provider.dart';
+import 'package:matchupnews/views/news_detail_screen.dart'; // ✅ DITAMBAHKAN
 import 'package:matchupnews/views/utils/helper.dart';
 import 'package:provider/provider.dart';
 
@@ -15,6 +16,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
   @override
   Widget build(BuildContext context) {
     final bookmarkProvider = Provider.of<BookmarkProvider>(context);
+    final isGuest = bookmarkProvider.isGuest;
     final bookmarks = bookmarkProvider.bookmarkedNews;
 
     return Scaffold(
@@ -38,77 +40,107 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
           children: [
             vsSmall,
             vsSmall,
-            Text("Bookmarked News",
+            Text(
+              "Bookmarked News",
               style: subtitle1.copyWith(color: cWhite, fontWeight: semibold),
             ),
             vsTiny,
             Expanded(
-              child: bookmarks.isEmpty
+              child: isGuest
                   ? Center(
                       child: Text(
-                        'No bookmarks yet.',
+                        'Login to view bookmarks.',
                         style: subtitle1.copyWith(color: cWhite),
                       ),
                     )
-                  : ListView.builder(
-                      itemCount: bookmarks.length,
-                      itemBuilder: (context, index) {
-                        final news = bookmarks[index];
-                        return Card(
-                          elevation: 0,
-                          margin: EdgeInsets.only(bottom: 12.h),
-                          color: cBoxDc,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(13),
+                  : bookmarks.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No bookmarks yet.',
+                            style: subtitle1.copyWith(color: cWhite),
                           ),
-                          child: Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(13),
-                                child: Image.network(
-                                  news.imageUrl,
-                                  width: 80.w,
-                                  height: 80.h,
-                                  fit: BoxFit.cover,
+                        )
+                      : ListView.builder(
+                          itemCount: bookmarks.length,
+                          itemBuilder: (context, index) {
+                            final news = bookmarks[index];
+                            return GestureDetector(
+                              onTap: () async {
+                                final result = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => NewsDetailScreen(
+                                      articleId: news.articleId,
+                                      title: news.title,
+                                      content: news.content,
+                                      imageUrl: news.imageUrl,
+                                      publishedAt: news.publishedAt,
+                                      category: news.category,
+                                      readTime: news.readTime,
+                                    ),
+                                  ),
+                                );
+
+                                // ✅ Auto remove jika dihapus dari detail
+                                if (result != null && result['deleted'] == true) {
+                                  bookmarkProvider.removeBookmark(news);
+                                  setState(() {});
+                                }
+                              },
+                              child: Card(
+                                elevation: 0,
+                                margin: EdgeInsets.only(bottom: 12.h),
+                                color: cBoxDc,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(13),
                                 ),
-                              ),
-                              SizedBox(width: 12.w),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                child: Row(
                                   children: [
-                                    Text(
-                                      news.title,
-                                      style: subtitle2.copyWith(
-                                          color: cWhite,
-                                          fontWeight: semibold),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(13),
+                                      child: Image.network(
+                                        news.imageUrl,
+                                        width: 80.w,
+                                        height: 80.h,
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
-                                    Text(
-                                      news.content,
-                                      style: caption.copyWith(color: cWhite),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                    SizedBox(width: 12.w),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            news.title,
+                                            style: subtitle2.copyWith(color: cWhite, fontWeight: semibold),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          Text(
+                                            news.content,
+                                            style: caption.copyWith(color: cWhite),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          Text(
+                                            news.publishedAt.split('T').first,
+                                            style: caption.copyWith(color: cWhite),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    Text(
-                                      news.publishedAt.split('T').first,
-                                      style: caption.copyWith(color: cWhite),
+                                    IconButton(
+                                      icon: Icon(Icons.delete, color: cWhite, size: 20),
+                                      onPressed: () {
+                                        bookmarkProvider.removeBookmark(news);
+                                      },
                                     ),
                                   ],
                                 ),
                               ),
-                              IconButton(
-                                icon: Icon(Icons.delete, color: cWhite, size: 20),
-                                onPressed: () {
-                                  bookmarkProvider.removeBookmark(news);
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                            );
+                          },
+                        ),
             ),
           ],
         ),

@@ -5,11 +5,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:matchupnews/routes/routes_name.dart';
+import 'package:matchupnews/views/bookmark_provider.dart';
 import 'package:matchupnews/views/utils/form_validator.dart';
 import 'package:matchupnews/views/utils/helper.dart';
 import 'package:matchupnews/views/widgets/custom_form_field.dart';
 import 'package:matchupnews/views/widgets/primary_button.dart';
 import 'package:matchupnews/views/widgets/rich_text_widget.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -34,6 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _continueAsGuest() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
+    Provider.of<BookmarkProvider>(context, listen: false).setToken(null);
     if (context.mounted) context.goNamed(RouteNames.main);
   }
 
@@ -48,6 +51,8 @@ class _LoginScreenState extends State<LoginScreen> {
         if (data['success'] == true) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('token', data['data']['token']);
+          Provider.of<BookmarkProvider>(context, listen: false).setToken(data['data']['token']);
+
 
           if (context.mounted) context.goNamed(RouteNames.main);
         } else {
