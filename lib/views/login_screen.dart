@@ -1,14 +1,16 @@
+import 'dart:convert';
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 import 'package:matchupnews/routes/routes_name.dart';
 import 'package:matchupnews/views/utils/form_validator.dart';
 import 'package:matchupnews/views/utils/helper.dart';
 import 'package:matchupnews/views/widgets/custom_form_field.dart';
 import 'package:matchupnews/views/widgets/primary_button.dart';
 import 'package:matchupnews/views/widgets/rich_text_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,11 +31,56 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
+  Future<void> _continueAsGuest() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('token');
+    if (context.mounted) context.goNamed(RouteNames.main);
+  }
+
+  Future<void> _handleLogin() async {
+    if (formkey.currentState!.validate()) {
+      final email = emailController.text;
+      final password = passwordController.text;
+
+      try {
+        final data = await loginUser(email, password);
+
+        if (data['success'] == true) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('token', data['data']['token']);
+
+          if (context.mounted) context.goNamed(RouteNames.main);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(data['message'] ?? 'Login gagal')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Terjadi kesalahan: $e')),
+        );
+      }
+    }
+  }
+
+  // ✅ Fungsi login langsung disatukan
+  Future<Map<String, dynamic>> loginUser(String email, String password) async {
+    final url = Uri.parse('https://rest-api-berita.vercel.app/api/v1/auth/login');
+
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'password': password}),
+    );
+
+    return jsonDecode(response.body);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: cBgDc,
-      body: SafeArea(
+      body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Form(
@@ -70,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Container(
                     width: 280.w,
                     height: 450.h,
-                    padding:REdgeInsets.all(50),
+                    padding: REdgeInsets.all(50),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                       color: cBoxDc,
@@ -86,36 +133,33 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         vsSuperTiny,
                         CustomFormField(
-                          controller: emailController, 
-                          hintText: 'Email', 
-                          keyboardType: TextInputType.emailAddress, 
-                          textInputAction: TextInputAction.next, 
+                          controller: emailController,
+                          hintText: 'Email',
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
                           validator: validateEmail,
                         ),
                         vsSmall,
                         RichTextWidget(
                           textOne: '* ',
-                          textStyleOne: subtitle2.copyWith(color: cError), 
+                          textStyleOne: subtitle2.copyWith(color: cError),
                           textTwo: 'Password',
                           textStyleTwo: subtitle2.copyWith(color: cWhite),
                         ),
                         vsSuperTiny,
                         CustomFormField(
-                          controller: passwordController, 
-                          hintText: 'Password', 
-                          keyboardType: TextInputType.url, 
-                          textInputAction: TextInputAction.done, 
+                          controller: passwordController,
+                          hintText: 'Password',
+                          keyboardType: TextInputType.visiblePassword,
+                          textInputAction: TextInputAction.done,
                           suffixIcon: IconButton(
-                            onPressed: togglePasswordVisibility, 
-                            icon: 
-                                isObsecure
-                                    ? const Icon(Icons.visibility_outlined)
-                                    : const Icon(Icons.visibility_off_outlined),
+                            onPressed: togglePasswordVisibility,
+                            icon: isObsecure
+                                ? const Icon(Icons.visibility_outlined)
+                                : const Icon(Icons.visibility_off_outlined),
                           ),
                           validator: validatePassword,
                           obscureText: isObsecure,
-                          
-
                         ),
                         vsMedium,
                         GestureDetector(
@@ -133,16 +177,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         SizedBox(height: 30),
                         Center(
                           child: PrimaryButton(
-                            onPressed: () {
-                              log('Login onTap');
-                              context.goNamed(RouteNames.main);
-                            }, 
+                            onPressed: _handleLogin,
                             title: 'Login',
                             width: 500,
                           ),
                         ),
                         vsSmall,
-                        SizedBox(height: 50),
+                        SizedBox(height: 30),
                         GestureDetector(
                           onTap: () {
                             context.pushNamed(RouteNames.register);
@@ -151,8 +192,21 @@ class _LoginScreenState extends State<LoginScreen> {
                             alignment: Alignment.center,
                             child: RichTextWidget(
                               textOne: 'Belum punya akun? ',
-                              textStyleOne: subtitle2.copyWith(color: cWhite), 
+                              textStyleOne: subtitle2.copyWith(color: cWhite),
                               textTwo: 'Daftar',
+                              textStyleTwo: subtitle2.copyWith(color: cLinear),
+                            ),
+                          ),
+                        ),
+                        vsSmall,
+                        GestureDetector(
+                          onTap: _continueAsGuest,
+                          child: Align(
+                            alignment: Alignment.center,
+                            child: RichTextWidget(
+                              textOne: 'Masuk tanpa akun? ',
+                              textStyleOne: subtitle2.copyWith(color: cWhite),
+                              textTwo: 'Masuk sebagai Guest',
                               textStyleTwo: subtitle2.copyWith(color: cLinear),
                             ),
                           ),
@@ -162,7 +216,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ],
-            )
+            ),
           ),
         ),
       ),

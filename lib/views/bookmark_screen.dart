@@ -45,16 +45,16 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
                     elevation: 0,
                     color: cBoxDc,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(13),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         SizedBox(
-                          width: 100.w,
-                          height: 100.h,
+                          width: 80.w,
+                          height: 80.h,
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(13),
                             child: Image.asset(
                               'assets/images/sample 4.jpeg',
                               fit: BoxFit.cover,
@@ -63,13 +63,24 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
                         ),
                         Column(crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Photo anime aja ,ya gitulah", style: subtitle1.copyWith(color: cWhite, fontWeight: semibold),
+                            Text("Photo anime aja ,ya gitulah", style: subtitle2.copyWith(color: cWhite, fontWeight: semibold),
                             ),
                             Text('Ga ada photo lagi', style: caption.copyWith(color: cWhite)),
                             Text('2045-13-32', style: caption.copyWith(color: cWhite)),
                           ],
                         ),
-                        Icon(Icons.bookmark_outlined),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                          child: Positioned(
+                            bottom: 20,
+                            right: 70,
+                            child: Icon(
+                              Icons.bookmark_sharp,
+                              color: cWhite,
+                              size: 20,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   );

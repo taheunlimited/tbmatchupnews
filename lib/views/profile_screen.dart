@@ -3,9 +3,18 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:matchupnews/views/utils/helper.dart';
+import 'package:go_router/go_router.dart'; // ✅ Tambahkan package go_router
+import 'package:shared_preferences/shared_preferences.dart'; // ✅ Tambahkan shared_preferences
+import 'package:matchupnews/routes/routes_name.dart'; // ✅ Tambahkan route names
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
+
+  Future<void> _logout(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('token'); // ✅ Hapus token
+    context.goNamed(RouteNames.login); // ✅ Kembali ke login screen
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,13 +22,13 @@ class ProfileScreen extends StatelessWidget {
       backgroundColor: cBgDc,
       body: Column(
         children: [
-          vsTiny,
-          Padding(padding: REdgeInsets.symmetric(horizontal: 10),
+          SizedBox(height: 50),
+          Padding(
+            padding: REdgeInsets.symmetric(horizontal: 10),
             child: Column(
               children: [
-                Text("Profil", style: headline3.copyWith(color: cWhite, fontWeight: bold),
-                ),
-                vsTiny,
+                Text("Profil", style: headline3.copyWith(color: cWhite, fontWeight: bold)),
+                SizedBox(height: 50),
                 Container(
                   padding: REdgeInsets.all(30),
                   decoration: BoxDecoration(
@@ -36,97 +45,68 @@ class ProfileScreen extends StatelessWidget {
                           backgroundImage: AssetImage('assets/images/logo Ai no bg-01.png'),
                         ),
                       ),
-                      vsTiny,
+                      vsLarge,
                       Row(
                         children: [
                           Expanded(
                             flex: 1,
-                            child: Text('Name', style: subtitle1.copyWith(color: cWhite, fontWeight: semibold),
-                            ),
+                            child: Text('Name', style: subtitle1.copyWith(color: cWhite, fontWeight: semibold)),
                           ),
                           Expanded(
                             flex: 3,
-                            child: Text(': Abdullah', style: subtitle1.copyWith(color: cWhite, fontWeight: semibold),
-                            ),
+                            child: Text(': Abdullah', style: subtitle1.copyWith(color: cWhite, fontWeight: semibold)),
                           ),
                         ],
                       ),
-                      vsTiny,
+                      vsLarge,
                       Row(
                         children: [
                           Expanded(
                             flex: 1,
-                            child: Text('Email', style: subtitle1.copyWith(color: cWhite, fontWeight: semibold),
-                            ),
+                            child: Text('Email', style: subtitle1.copyWith(color: cWhite, fontWeight: semibold)),
                           ),
                           Expanded(
                             flex: 3,
-                            child: Text(': abdullah@gmail.com', style: subtitle1.copyWith(color: cWhite, fontWeight: semibold),
-                            ),
+                            child: Text(': abdullah@gmail.com', style: subtitle1.copyWith(color: cWhite, fontWeight: semibold)),
                           ),
                         ],
                       ),
-                      vsTiny,
+                      vsLarge,
                       Row(
                         children: [
                           Expanded(
                             flex: 1,
-                            child: Text('Number', style: subtitle1.copyWith(color: cWhite, fontWeight: semibold),
-                            ),
+                            child: Text('Number', style: subtitle1.copyWith(color: cWhite, fontWeight: semibold)),
                           ),
                           Expanded(
                             flex: 3,
-                            child: Text(': 08211232323', style: subtitle1.copyWith(color: cWhite, fontWeight: semibold),
-                            ),
+                            child: Text(': 08211232323', style: subtitle1.copyWith(color: cWhite, fontWeight: semibold)),
                           ),
                         ],
                       ),
-                      vsTiny,
+                      vsLarge,
                       Row(
                         children: [
                           Expanded(
                             flex: 1,
-                            child: Text('Address', style: subtitle1.copyWith(color: cWhite, fontWeight: semibold),
-                            ),
+                            child: Text('Address', style: subtitle1.copyWith(color: cWhite, fontWeight: semibold)),
                           ),
                           Expanded(
                             flex: 3,
-                            child: Text(': Jl. Cangkring Maleer, Kec.Batununggal, Kota Bandung, Jawa Barat 40274', style: subtitle1.copyWith(color: cWhite, fontWeight: semibold),
-                            ),
+                            child: Text(': Jl. Cangkring Maleer, Kec.Batununggal, Kota Bandung, Jawa Barat 40274', style: subtitle1.copyWith(color: cWhite, fontWeight: semibold)),
                           ),
                         ],
                       ),
                     ],
                   ),
                 ),
-                ListTile(
-                  onTap: () {
-                    log('Edit Profile');
-                  },
-                  leading: Icon(Icons.edit_square),
-                  trailing: Icon(Icons.keyboard_arrow_right_outlined),
-                  title: Text('Edit Profile', style: subtitle1.copyWith(fontWeight: semibold, color: cWhite),
-                  ),
-                ),
+                SizedBox(height: 15),
                 Divider(color: cBgDc, height: 4),
                 ListTile(
-                  onTap: () {
-                    log('Edit Password');
-                  },
-                  leading: Icon(Icons.password),
-                  trailing: Icon(Icons.keyboard_arrow_right_outlined),
-                  title: Text('Edit Password', style: subtitle1.copyWith(fontWeight: semibold, color: cWhite),
-                  ),
-                ),
-                Divider(color: cBgDc, height: 4),
-                ListTile(
-                  onTap: () {
-                    log('Logout');
-                  },
+                  onTap: () => _logout(context), // ✅ Logout action
                   leading: Icon(Icons.logout),
                   trailing: Icon(Icons.keyboard_arrow_right_outlined),
-                  title: Text('Logout', style: subtitle1.copyWith(fontWeight: semibold, color: cWhite),
-                  ),
+                  title: Text('Logout', style: subtitle1.copyWith(fontWeight: semibold, color: cWhite)),
                 ),
               ],
             ),
