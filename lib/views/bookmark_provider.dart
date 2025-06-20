@@ -1,27 +1,24 @@
-import 'package:flutter/material.dart';
-import 'package:matchupnews/views/home_screen.dart';
-// Pastikan `News` bisa diakses
+import 'package:flutter/foundation.dart';
+import '../views/home_screen.dart'; // karena model News kamu ada di situ
 
-class BookmarkProvider extends ChangeNotifier {
-  final List<News> _bookmarkedArticles = [];
+class BookmarkProvider with ChangeNotifier {
+  final List<News> _bookmarkedNews = [];
 
-  List<News> get bookmarks => _bookmarkedArticles;
+  List<News> get bookmarkedNews => _bookmarkedNews;
 
-  void toggleBookmark(News news) {
-    if (_bookmarkedArticles.contains(news)) {
-      _bookmarkedArticles.remove(news);
-    } else {
-      _bookmarkedArticles.add(news);
+  void addBookmark(News news) {
+    if (!_bookmarkedNews.any((item) => item.title == news.title)) {
+      _bookmarkedNews.add(news);
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   void removeBookmark(News news) {
-    _bookmarkedArticles.remove(news);
+    _bookmarkedNews.removeWhere((item) => item.title == news.title);
     notifyListeners();
   }
 
   bool isBookmarked(News news) {
-    return _bookmarkedArticles.contains(news);
+    return _bookmarkedNews.any((item) => item.title == news.title);
   }
 }

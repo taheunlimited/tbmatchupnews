@@ -3,7 +3,9 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:matchupnews/views/add_news_screen.dart';
+import 'package:matchupnews/views/bookmark_provider.dart';
 import 'package:matchupnews/views/utils/helper.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
@@ -201,7 +203,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           ]),
                           Positioned(
                             bottom: 12, right: 12,
-                            child: Icon(Icons.bookmark_border, color: cWhite, size: 20),
+                            child: Consumer<BookmarkProvider>(
+                              builder: (context, bookmarkProvider, _) {
+                                final isBookmarked = bookmarkProvider.isBookmarked(a);
+                                return GestureDetector(
+                                  onTap: () {
+                                    if (isBookmarked) {
+                                      bookmarkProvider.removeBookmark(a);
+                                    } else {
+                                      bookmarkProvider.addBookmark(a);
+                                    }
+                                  },
+                                  child: Icon(
+                                    isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
+                                    color: cWhite,
+                                    size: 20,
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ],
                       ),
@@ -260,7 +280,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           ]),
                           Positioned(
                             bottom: 12, right: 12,
-                            child: Icon(Icons.bookmark_border, color: cWhite, size: 20),
+                            child: Consumer<BookmarkProvider>(
+                              builder: (context, bookmarkProvider, _) {
+                                final isBookmarked = bookmarkProvider.isBookmarked(a);
+                                return GestureDetector(
+                                  onTap: () {
+                                    if (isBookmarked) {
+                                      bookmarkProvider.removeBookmark(a);
+                                    } else {
+                                      bookmarkProvider.addBookmark(a);
+                                    }
+                                  },
+                                  child: Icon(
+                                    isBookmarked ? Icons.bookmark : Icons.bookmark_outline,
+                                    color: cWhite,
+                                    size: 20,
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ],
                       ),
