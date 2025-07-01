@@ -16,12 +16,12 @@ class IntroductionScreen extends StatefulWidget {
 class _IntroductionScreenState extends State<IntroductionScreen> {
   List<Map<String, dynamic>> pageList = [
     {
-      'imageUrl':'assets/images/logo Ai no bg-01.png',
+      'imageUrl':'assets/images/intro 1.png',
       'heading':'Selamat datang',
       'body':'Coming Soon',
     },
     {
-      'imageUrl':'assets/images/logo Ai no bg-01.png',
+      'imageUrl':'assets/images/intro 2.png',
       'heading':'Welcome！',
       'body':'Coming Soon',
     },

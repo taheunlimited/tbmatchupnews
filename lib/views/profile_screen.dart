@@ -42,7 +42,7 @@ class ProfileScreen extends StatelessWidget {
                         child: CircleAvatar(
                           backgroundColor: cBgDc,
                           radius: 70,
-                          backgroundImage: AssetImage('assets/images/logo Ai no bg-01.png'),
+                          backgroundImage: AssetImage('assets/images/logo matchup.png'),
                         ),
                       ),
                       vsLarge,

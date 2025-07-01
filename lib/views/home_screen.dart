@@ -176,7 +176,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return Scaffold(
       appBar: AppBar(
         backgroundColor: cBgDc,
-        leading: Image.asset('assets/images/logo Ai no bg-01.png', width: 36.w, fit: BoxFit.contain),
+        leading: Image.asset('assets/images/logo matchup.png', width: 36.w, fit: BoxFit.contain),
         title: Text('MatchUP', style: headline4.copyWith(color: cPrimary, fontWeight: bold)),
       ),
       backgroundColor: cBgDc,
