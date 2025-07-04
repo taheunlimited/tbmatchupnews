@@ -1,61 +1,57 @@
-import 'dart:convert';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:matchupnews/views/add_news_screen.dart';
 import 'package:matchupnews/views/bookmark_provider.dart';
 import 'package:matchupnews/views/news_detail_screen.dart';
+import 'package:matchupnews/views/utils/client_internet_api.dart';
 import 'package:matchupnews/views/utils/helper.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 
 class News {
-  final String articleId;
+  final String id;
   final String title;
+  final String slug;
+  final String summary;
   final String content;
   final String imageUrl;
-  final String publishedAt;
-  final String readTime;
   final String category;
+  final String publishedAt;
+  final int viewCount;
+  final String createdAt;
+  final String updatedAt;
+  final String authorName;
 
   News({
-    required this.articleId,
+    required this.id,
     required this.title,
+    required this.slug,
+    required this.summary,
     required this.content,
     required this.imageUrl,
-    required this.publishedAt,
-    required this.readTime,
     required this.category,
+    required this.publishedAt,
+    required this.viewCount,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.authorName,
   });
 
   factory News.fromJson(Map<String, dynamic> json) {
     return News(
-      articleId: json['id'] ?? '',
+      id: json['id'] ?? '',
       title: json['title'] ?? '',
+      slug: json['slug'] ?? '',
+      summary: json['summary'] ?? '',
       content: json['content'] ?? '',
-      imageUrl: json['imageUrl'] ?? '',
-      publishedAt: json['publishedAt'] ?? '',
-      readTime: json['readTime'] ?? '',
+      imageUrl: json['featured_image_url'] ?? '',
       category: json['category'] ?? '',
-    );
-  }
-
-  News copyWith({
-    String? title,
-    String? content,
-    String? imageUrl,
-    String? category,
-    String? readTime,
-  }) {
-    return News(
-      articleId: articleId,
-      title: title ?? this.title,
-      content: content ?? this.content,
-      imageUrl: imageUrl ?? this.imageUrl,
-      publishedAt: publishedAt,
-      readTime: readTime ?? this.readTime,
-      category: category ?? this.category,
+      publishedAt: json['published_at'] ?? '',
+      viewCount: json['view_count'] ?? 0,
+      createdAt: json['created_at'] ?? '',
+      updatedAt: json['updated_at'] ?? '',
+      authorName: json['author_name'] ?? '',
     );
   }
 }
@@ -72,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   String? token;
   List<News> articles = [];
   bool isLoading = true;
+  int currentCarouselIndex = 0;
 
   @override
   void initState() {
@@ -90,11 +87,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   Future<void> _fetchArticles() async {
     try {
-      final resp = await http.get(Uri.parse('https://rest-api-berita.vercel.app/api/v1/news?page=1&limit=10'));
-      final jsonData = jsonDecode(resp.body);
-
+      final jsonData = await ClientInternetApi.getNews();
       if (jsonData['success'] == true) {
-        final list = jsonData['data']['articles'] as List<dynamic>;
+        final list = jsonData['data'] as List<dynamic>;
         setState(() {
           articles = list.map((e) => News.fromJson(e)).toList();
           isLoading = false;
@@ -114,7 +109,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         const SnackBar(content: Text("Login to add news")),
       );
     } else {
-      final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => const AddNewsScreen()));
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const AddNewsScreen()),
+      );
       if (result == true) {
         _fetchArticles();
       }
@@ -126,43 +124,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       context,
       MaterialPageRoute(
         builder: (_) => NewsDetailScreen(
-          articleId: article.articleId,
+          id: article.id,
           title: article.title,
           content: article.content,
-          imageUrl: article.imageUrl,
+          featuredImageUrl: article.imageUrl,
           publishedAt: article.publishedAt,
           category: article.category,
-          readTime: article.readTime,
+          slug: article.slug,
+          summary: article.summary,
         ),
       ),
     );
 
-    if (result is Map) {
-      if (result['updated'] == true || result['deleted'] == true) {
-        _fetchArticles();
-      }
-    }
-
-    if (result is Map && result['updated'] == true) {
-      final updated = result['updatedArticle'];
-      setState(() {
-        articles = articles.map((a) {
-          if (a.articleId == updated['articleId']) {
-            return a.copyWith(
-              title: updated['title'],
-              content: updated['content'],
-              imageUrl: updated['imageUrl'],
-              category: updated['category'],
-              readTime: updated['readTime'],
-            );
-          }
-          return a;
-        }).toList();
-      });
+    if (result == true || (result is Map && (result['updated'] == true || result['deleted'] == true))) {
+      _fetchArticles();
     }
   }
-
-  int currentCarouselIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -185,9 +162,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            vsSmall, vsSmall,
+            vsSmall,
             _buildCarousel(),
-            vsLarge, SizedBox(height: 10),
+            vsLarge,
             Text("Hot News", style: subtitle1.copyWith(color: cWhite, fontWeight: semibold)),
             vsTiny,
             _buildNewsList(articles),
@@ -273,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                           child: Image.network(
                             a.imageUrl,
                             width: 260.w,
@@ -283,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         ),
                         SizedBox(height: 6.h),
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [

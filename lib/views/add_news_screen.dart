@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:matchupnews/views/utils/client_internet_api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:matchupnews/views/utils/helper.dart';
@@ -17,7 +18,9 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController contentController = TextEditingController();
   final TextEditingController imageUrlController = TextEditingController();
-  final TextEditingController readTimeController = TextEditingController();
+  final TextEditingController summary = TextEditingController();
+  final TextEditingController tagsController = TextEditingController();
+  bool isPublished = true;
 
   String? selectedCategory;
   final List<String> categories = ['Politics', 'Technology', 'Health', 'Sports'];
@@ -60,6 +63,46 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
                 ),
                 SizedBox(height: 12),
 
+                // Summary Field
+                SizedBox(height: 12),
+                TextFormField(
+                  controller: summary,
+                  decoration: _inputDecoration('Summary'),
+                  style: TextStyle(color: cWhite),
+                  maxLines: 2,
+                  validator: (value) =>
+                      value == null || value.length < 10 ? 'Summary must be at least 10 characters' : null,
+                ),
+
+                // Tags Field
+                SizedBox(height: 12),
+                TextFormField(
+                  controller: tagsController,
+                  decoration: _inputDecoration('Tags (comma separated)'),
+                  style: TextStyle(color: cWhite),
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'Enter at least one tag' : null,
+                ),
+
+                // Is Published Checkbox
+                SizedBox(height: 12),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: isPublished,
+                      onChanged: (value) {
+                        setState(() {
+                          isPublished = value ?? true;
+                        });
+                      },
+                      activeColor: cPrimary,
+                    ),
+                    Text(
+                      'Published',
+                      style: TextStyle(color: cWhite),
+                    ),
+                  ],
+                ),
                 // Image URL
                 TextFormField(
                   controller: imageUrlController,
@@ -67,16 +110,6 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
                   style: TextStyle(color: cWhite),
                   validator: (value) =>
                       value == null || !value.startsWith('http') ? 'Enter valid image URL' : null,
-                ),
-                SizedBox(height: 12),
-
-                // Read Time
-                TextFormField(
-                  controller: readTimeController,
-                  decoration: _inputDecoration('Read Time (e.g. 5 min)'),
-                  style: TextStyle(color: cWhite),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Enter read time' : null,
                 ),
                 SizedBox(height: 12),
 
@@ -109,8 +142,8 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
                   style: TextStyle(color: cWhite),
                   maxLines: 6,
                   validator: (value) =>
-                      value == null || value.length < 100
-                          ? 'Content must be at least 100 characters'
+                      value == null || value.length < 20
+                          ? 'Content must be at least 20 characters'
                           : null,
                 ),
 
@@ -152,32 +185,27 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
         return;
       }
 
-      final url = Uri.parse('https://rest-api-berita.vercel.app/api/v1/news');
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
+      final responseData = await ClientInternetApi.postNews(
+        {
           'title': titleController.text,
           'category': selectedCategory,
-          'readTime': readTimeController.text,
-          'imageUrl': imageUrlController.text,
+          'featuredImageUrl': imageUrlController.text,
+          'summary': summary.text,
           'content': contentController.text,
-          'tags': ['flutter', 'news'],
-        }),
+          'tags': tagsController.text.split(',').map((e) => e.trim()).toList(),
+          'isPublished': isPublished,
+        },
       );
 
-      final responseData = jsonDecode(response.body);
-      if (response.statusCode == 201 && responseData['success'] == true) {
+
+      if (responseData['success'] == true) {
         if (!mounted) return;
         Navigator.pop(context, true); // Trigger refresh di HomeScreen
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("News added successfully!")),
         );
       } else {
-        print("Upload failed: ${response.body}");
+        print("Upload failed: ${responseData}");
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Failed to add news: ${responseData['message']}")),
@@ -210,7 +238,9 @@ class _AddNewsScreenState extends State<AddNewsScreen> {
     titleController.dispose();
     contentController.dispose();
     imageUrlController.dispose();
-    readTimeController.dispose();
+    summary.dispose();
+    tagsController.dispose();
     super.dispose();
   }
+
 }

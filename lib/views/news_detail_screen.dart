@@ -1,29 +1,32 @@
-import 'dart:convert'; // 🔹 DITAMBAHKAN
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:http/http.dart' as http; // 🔹 DITAMBAHKAN
+import 'package:http/http.dart' as http;
 import 'package:matchupnews/views/edit_news_screen.dart';
+import 'package:matchupnews/views/utils/client_internet_api.dart';
 import 'package:matchupnews/views/utils/helper.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // 🔹 DITAMBAHKAN
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NewsDetailScreen extends StatefulWidget {
-  final String articleId;
+  final String id;
   final String title;
+  final String slug;
+  final String summary;
   final String content;
-  final String imageUrl;
-  final String publishedAt;
+  final String featuredImageUrl;
   final String category;
-  final String readTime;
+  final String publishedAt;
 
   const NewsDetailScreen({
     super.key,
-    required this.articleId,
+    required this.id,
     required this.title,
+    required this.slug,
+    required this.summary,
     required this.content,
-    required this.imageUrl,
-    required this.publishedAt,
+    required this.featuredImageUrl,
     required this.category,
-    required this.readTime,
+    required this.publishedAt,
   });
 
   @override
@@ -35,7 +38,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
   late String content;
   late String imageUrl;
   late String category;
-  late String readTime;
+  late String summary;
 
   String? token;
 
@@ -44,10 +47,11 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     super.initState();
     title = widget.title;
     content = widget.content;
-    imageUrl = widget.imageUrl;
+    imageUrl = widget.featuredImageUrl;
     category = widget.category;
-    readTime = widget.readTime;
+    summary = widget.summary;
     _loadToken();
+    _fetchDetailNews();
   }
 
   Future<void> _loadToken() async {
@@ -57,28 +61,50 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     });
   }
 
-  Future<void> _navigateToEdit() async {
+  Future<void> _fetchDetailNews() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
+    final result = await ClientInternetApi.detailNews(widget.slug);
+
+    if (!mounted) return;
+
+    if (result['success'] == true) {
+      final news = result['data'];
+
+      setState(() {
+        title = news['title'];
+        content = news['content'];
+        imageUrl = news['featured_image_url'];
+        category = news['category'];
+        summary = news['summary'];
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed: ${result['message'] ?? 'Unknown error'}")),
+      );
+    }
+  }
+
+  Future<void> _navigateToEdit() async {
     if (token == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Login to Edit News")),
       );
       return;
     }
-    
+
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => EditNewsScreen(
-          articleId: widget.articleId,
+          articleId: widget.id,
           title: title,
           content: content,
-          imageUrl: imageUrl,
+          featuredImageUrl: imageUrl,
           publishedAt: widget.publishedAt,
           category: category,
-          readTime: readTime,
+          summary: summary,
         ),
       ),
     );
@@ -90,25 +116,24 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
         content = updated['content'];
         imageUrl = updated['imageUrl'];
         category = updated['category'];
-        readTime = updated['readTime'];
+        summary = updated['summary'];
       });
 
       Navigator.pop(context, {
         'updated': true,
         'updatedArticle': {
-          'articleId': widget.articleId,
+          'articleId': widget.id,
           'title': updated['title'],
           'content': updated['content'],
           'imageUrl': updated['imageUrl'],
           'category': updated['category'],
           'publishedAt': widget.publishedAt,
-          'readTime': updated['readTime'],
+          'summary': updated['summary'],
         }
       });
     }
   }
 
-  // 🔹 DITAMBAHKAN: Fungsi konfirmasi delete
   Future<void> _confirmDelete(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -130,31 +155,19 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     );
 
     if (confirm == true) {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final result = await ClientInternetApi.deleteNews(widget.id);
+      if (!mounted) return;
 
-      if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("You must login to delete this")),
-        );
-        return;
-      }
-
-      final url = Uri.parse('https://rest-api-berita.vercel.app/api/v1/news/${widget.articleId}');
-      final resp = await http.delete(url, headers: {
-        'Authorization': 'Bearer $token',
-      });
-
-      final data = jsonDecode(resp.body);
-      if (resp.statusCode == 200 && data['success'] == true) {
+   
+      if (result['success'] == true) {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("News deleted successfully")),
         );
-        Navigator.pop(context, {'deleted': true}); // 🔹 Kembali ke Home dengan status deleted
+        Navigator.pop(context, {'deleted': true});
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed: ${data['message'] ?? 'Unknown error'}")),
+          SnackBar(content: Text("Failed: ${result['message'] ?? 'Unknown error'}")),
         );
       }
     }
@@ -173,16 +186,16 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
           overflow: TextOverflow.ellipsis,
         ),
         iconTheme: IconThemeData(color: cWhite),
-        actions: token != null 
-            ?[
-              IconButton(
-                onPressed: _navigateToEdit, 
-                icon: Icon(Icons.edit, color: cWhite),
-              ),
-              IconButton(
-                onPressed: () => _confirmDelete(context), 
-                icon: Icon(Icons.delete,color: cError),
-              ),
+        actions: token != null
+            ? [
+                IconButton(
+                  onPressed: _navigateToEdit,
+                  icon: Icon(Icons.edit, color: cWhite),
+                ),
+                IconButton(
+                  onPressed: () => _confirmDelete(context),
+                  icon: Icon(Icons.delete, color: cError),
+                ),
               ]
             : [],
       ),

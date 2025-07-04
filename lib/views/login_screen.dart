@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:matchupnews/routes/routes_name.dart';
 import 'package:matchupnews/views/bookmark_provider.dart';
 import 'package:matchupnews/views/utils/form_validator.dart';
+import 'package:matchupnews/views/utils/client_internet_api.dart';
 import 'package:matchupnews/views/utils/helper.dart';
 import 'package:matchupnews/views/widgets/custom_form_field.dart';
 import 'package:matchupnews/views/widgets/primary_button.dart';
@@ -47,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       try {
         final data = await loginUser(email, password);
-
+        
         if (data['success'] == true) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('token', data['data']['token']);
@@ -70,15 +71,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // ✅ Fungsi login langsung disatukan
   Future<Map<String, dynamic>> loginUser(String email, String password) async {
-    final url = Uri.parse('https://rest-api-berita.vercel.app/api/v1/auth/login');
-
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
-    );
-
-    return jsonDecode(response.body);
+    final result = await ClientInternetApi.login(email, password);
+    return result;
   }
 
   @override

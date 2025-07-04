@@ -31,6 +31,10 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(seconds: 3));
 
     if (mounted) {
+      if(token != null){
+        context.goNamed(RouteNames.main);
+        return;
+      }
       context.goNamed(RouteNames.introduction);
     }
   }

@@ -33,10 +33,8 @@ String? validateEmail(String? value) {
 String? validatePassword(String? value) {
   if (value!.isEmpty) {
     return 'Password can\'t be empty';
-  } else if (value.length < 8) {
+  } else if (value.length < 2) {
     return 'Password can\'t be less than 8 characters';
-  } else if (!RegExp(r'^(?=.*[a-z])(?=.*[0-9]).{8,}$').hasMatch(value)) {
-    return 'Password must be 8 - 16 characters long and contain alphabets and numbers';
   } else {
     return null;
   }

@@ -23,7 +23,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
       appBar: AppBar(
         backgroundColor: cBgDc,
         leading: Image.asset(
-          'assets/images/logo Ai no bg-01.png',
+          'assets/images/logo matchup.png',
           width: 36.w,
           fit: BoxFit.contain,
         ),
@@ -70,13 +70,14 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => NewsDetailScreen(
-                                      articleId: news.articleId,
+                                      id: news.id, // ✅ ganti dari articleId
                                       title: news.title,
+                                      slug: news.slug,
+                                      summary: news.summary,
                                       content: news.content,
-                                      imageUrl: news.imageUrl,
+                                      featuredImageUrl: news.imageUrl,
                                       publishedAt: news.publishedAt,
                                       category: news.category,
-                                      readTime: news.readTime,
                                     ),
                                   ),
                                 );
@@ -99,7 +100,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(13),
                                       child: Image.network(
-                                        news.imageUrl,
+                                        news.imageUrl, // ✅ ganti dari imageUrl
                                         width: 80.w,
                                         height: 80.h,
                                         fit: BoxFit.cover,
@@ -117,7 +118,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                           Text(
-                                            news.content,
+                                            news.summary,
                                             style: caption.copyWith(color: cWhite),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,

@@ -32,6 +32,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.4
   flutter_screenutil: ^5.9.3
   go_router: ^15.1.2
   google_fonts: ^6.2.1
@@ -45,6 +46,11 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   flutter_test:
     sdk: flutter
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo matchup.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
